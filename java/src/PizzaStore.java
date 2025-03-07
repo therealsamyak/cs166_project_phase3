@@ -715,54 +715,37 @@ public class PizzaStore {
    }
 
    public static void viewStores(PizzaStore esql) {
-      try {
-         String query = "SELECT storeID, latitude, longitude, street, city, state, zipcode, reviewScore, " +
-               "openingHours, closingHours FROM Store";
-         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+      public static void viewStores(PizzaStore esql) {
+   try {
+      String query = "SELECT storeID, address, city, state, isOpen, reviewScore FROM Store";
+      List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
-         if (result.isEmpty()) {
-            System.out.println("No stores available.");
-         } else {
-            System.out.println("");
-            System.out.println("AVAILABLE STORES");
+      if (result.isEmpty()) {
+         System.out.println("No stores available.");
+      } else {
+         System.out.println("");
+         System.out.println("AVAILABLE STORES");
+         System.out.println("----------------");
+
+         for (List<String> store : result) {
+            String storeID = store.get(0);
+            String address = store.get(1);
+            String city = store.get(2);
+            String state = store.get(3);
+            String isOpen = store.get(4);
+            String reviewScore = store.get(5);
+
+            System.out.println("Store ID: " + storeID);
+            System.out.println("Location: " + address + ", " + city + ", " + state);
+            System.out.println("Review Score: " + reviewScore);
+            System.out.println("Status: " + (isOpen.equals("1") ? "OPEN" : "CLOSED"));
             System.out.println("----------------");
-
-            for (List<String> store : result) {
-               String storeID = store.get(0);
-               String latitude = store.get(1);
-               String longitude = store.get(2);
-               String street = store.get(3);
-               String city = store.get(4);
-               String state = store.get(5);
-               String zipcode = store.get(6);
-               String reviewScore = store.get(7);
-               String openingHours = store.get(8);
-               String closingHours = store.get(9);
-
-               // Get current time in string format for simple comparison (HH:mm:ss)
-               java.util.Date date = new java.util.Date();
-               java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
-               String currentTime = sdf.format(date);
-
-               // Simple check if store is open (compare strings)
-               String status = "CLOSED";
-               if (currentTime.compareTo(openingHours) >= 0 && currentTime.compareTo(closingHours) <= 0) {
-                  status = "OPEN";
-               }
-
-               System.out.println("Store ID: " + storeID);
-               System.out.println("Location: " + street + ", " + city + ", " + state + " " + zipcode);
-               System.out.println("Coordinates: (" + latitude + ", " + longitude + ")");
-               System.out.println("Review Score: " + reviewScore);
-               System.out.println("Status: " + status);
-               System.out.println("Hours: " + openingHours + " - " + closingHours);
-               System.out.println("----------------");
-            }
          }
-      } catch (Exception e) {
-         System.err.println("Error viewing stores: " + e.getMessage());
       }
+   } catch (Exception e) {
+      System.err.println("Error viewing stores: " + e.getMessage());
    }
+}
 
    public static void updateOrderStatus(PizzaStore esql) {
    }
