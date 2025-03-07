@@ -284,6 +284,7 @@ public class PizzaStore {
             if (!esql.currentUserRole.isEmpty()) {
                boolean usermenu = true;
                while (usermenu) {
+                  System.out.println("");
                   System.out.println("MAIN MENU");
                   System.out.println("---------");
                   System.out.println("1. View Profile");
@@ -496,6 +497,7 @@ public class PizzaStore {
 
    // Rest of the functions definition go in here
 
+   // view profile
    public static void viewProfile(PizzaStore esql) {
       try {
          if (esql.currentUserLogin.isEmpty()) {
@@ -528,6 +530,7 @@ public class PizzaStore {
       }
    }
 
+   // update profile
    public static void updateProfile(PizzaStore esql) {
       try {
          if (esql.currentUserLogin.isEmpty()) {
@@ -588,7 +591,39 @@ public class PizzaStore {
       }
    }
 
+   // view menu
    public static void viewMenu(PizzaStore esql) {
+      try {
+
+         String query = "SELECT itemName, ingredients, typeOfItem, price, description FROM Items";
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+         if (result.isEmpty()) {
+            System.out.println("No items available in the menu.");
+         } else {
+            System.out.println("");
+            System.out.println("STORE MENU");
+            System.out.println("-------------");
+
+            for (List<String> item : result) {
+               String itemName = item.get(0);
+               String ingredients = item.get(1);
+               String typeOfItem = item.get(2);
+               String price = item.get(3);
+               String description = item.get(4);
+
+               System.out.println("Item: " + itemName);
+               System.out.println("Ingredients: " + ingredients);
+               System.out.println("Type: " + typeOfItem);
+               System.out.println("Price: $" + price);
+               System.out.println("Description: "
+                     + (description != null && !description.isEmpty() ? description : "No description available."));
+               System.out.println("-----------");
+            }
+         }
+      } catch (Exception e) {
+         System.err.println("Error viewing menu: " + e.getMessage());
+      }
    }
 
    public static void placeOrder(PizzaStore esql) {
