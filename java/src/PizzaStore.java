@@ -594,31 +594,107 @@ public class PizzaStore {
    // view menu
    public static void viewMenu(PizzaStore esql) {
       try {
+         // Variables for filters
+         String currentTypeFilter = "";
+         String currentPriceFilter = "";
+         String currentSortOrder = ""; // Add a new filter for price sorting
 
-         String query = "SELECT itemName, ingredients, typeOfItem, price, description FROM Items";
-         List<List<String>> result = esql.executeQueryAndReturnResult(query);
-
-         if (result.isEmpty()) {
-            System.out.println("No items available in the menu.");
-         } else {
+         while (true) {
             System.out.println("");
             System.out.println("STORE MENU");
             System.out.println("-------------");
 
-            for (List<String> item : result) {
-               String itemName = item.get(0);
-               String ingredients = item.get(1);
-               String typeOfItem = item.get(2);
-               String price = item.get(3);
-               String description = item.get(4);
+            System.out.println("Current Filters:");
+            System.out.println("Type: " + (currentTypeFilter.isEmpty() ? "Any" : currentTypeFilter));
+            System.out.println("Price: " + (currentPriceFilter.isEmpty() ? "Any" : currentPriceFilter));
+            System.out.println("Sort: " + (currentSortOrder.isEmpty() ? "None" : currentSortOrder));
 
-               System.out.println("Item: " + itemName);
-               System.out.println("Ingredients: " + ingredients);
-               System.out.println("Type: " + typeOfItem);
-               System.out.println("Price: $" + price);
-               System.out.println("Description: "
-                     + (description != null && !description.isEmpty() ? description : "No description available."));
-               System.out.println("-----------");
+            System.out.println("");
+            System.out.println("0. View items (w/ filters)");
+            System.out.println("1. Filter by type");
+            System.out.println("2. Filter by price (maximum)");
+            System.out.println("3. Sort by price (Lowest to Highest)");
+            System.out.println("4. Sort by price (Highest to Lowest)");
+            System.out.println("5. Reset all filters");
+            System.out.println(".........................");
+            System.out.println("6. Go back");
+
+            switch (readChoice()) {
+               case 0:
+                  // Build the query
+                  String query = "SELECT itemName, ingredients, typeOfItem, price, description FROM Items";
+                  boolean hasWhereClause = false;
+
+                  if (!currentTypeFilter.isEmpty()) {
+                     query += " WHERE typeOfItem = \'" + currentTypeFilter.trim() + "\'";
+                     hasWhereClause = true;
+                  }
+                  if (!currentPriceFilter.isEmpty()) {
+                     query += (hasWhereClause ? " AND" : " WHERE") + " price <= " + currentPriceFilter;
+                     hasWhereClause = true;
+                  }
+                  if (!currentSortOrder.isEmpty()) {
+                     query += " ORDER BY price " + currentSortOrder;
+                  }
+
+                  // Execute and display results
+                  List<List<String>> result = esql.executeQueryAndReturnResult(query);
+                  if (result.isEmpty()) {
+                     System.out.println("\nNo items available in the menu. Please select a different filter.");
+                  } else {
+                     for (List<String> item : result) {
+                        String itemName = item.get(0);
+                        String ingredients = item.get(1);
+                        String typeOfItem = item.get(2);
+                        String price = item.get(3);
+                        String description = item.get(4);
+
+                        System.out.println("Item: " + itemName);
+                        System.out.println("Ingredients: " + ingredients);
+                        System.out.println("Type: " + typeOfItem);
+                        System.out.println("Price: $" + price);
+                        System.out
+                              .println("Description: " + (description != null && !description.isEmpty() ? description
+                                    : "No description available."));
+                        System.out.println("-----------");
+                     }
+                  }
+                  break;
+               case 1:
+                  // Filter by type
+                  System.out.print("Enter type to filter (e.g., 'drinks', 'sides'): ");
+                  String type = in.readLine().trim();
+                  currentTypeFilter = type;
+                  System.out.println("Filter set to type: " + type);
+                  break;
+               case 2:
+                  // Filter by price
+                  System.out.print("Enter maximum price to filter (e.g., 10.00): ");
+                  String price = in.readLine().trim();
+                  currentPriceFilter = price;
+                  System.out.println("Filter set to price: $" + price);
+                  break;
+               case 3:
+                  // Sort by price (Lowest to Highest)
+                  currentSortOrder = "ASC";
+                  System.out.println("Sorting by price: Lowest to Highest");
+                  break;
+               case 4:
+                  // Sort by price (Highest to Lowest)
+                  currentSortOrder = "DESC";
+                  System.out.println("Sorting by price: Highest to Lowest");
+                  break;
+               case 5:
+                  // Reset all filters
+                  currentPriceFilter = "";
+                  currentTypeFilter = "";
+                  currentSortOrder = "";
+                  System.out.println("Filters reset.");
+                  break;
+               case 6:
+                  return;
+               default:
+                  System.out.println("Unrecognized choice!");
             }
          }
       } catch (Exception e) {
@@ -638,55 +714,55 @@ public class PizzaStore {
    public static void viewOrderInfo(PizzaStore esql) {
    }
 
-  public static void viewStores(PizzaStore esql) {
-   try {
-      String query = "SELECT storeID, latitude, longitude, street, city, state, zipcode, reviewScore, " +
-                     "openingHours, closingHours FROM Store";
-      List<List<String>> result = esql.executeQueryAndReturnResult(query);
+   public static void viewStores(PizzaStore esql) {
+      try {
+         String query = "SELECT storeID, latitude, longitude, street, city, state, zipcode, reviewScore, " +
+               "openingHours, closingHours FROM Store";
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
-      if (result.isEmpty()) {
-         System.out.println("No stores available.");
-      } else {
-         System.out.println("");
-         System.out.println("AVAILABLE STORES");
-         System.out.println("----------------");
-
-         for (List<String> store : result) {
-            String storeID = store.get(0);
-            String latitude = store.get(1);
-            String longitude = store.get(2);
-            String street = store.get(3);
-            String city = store.get(4);
-            String state = store.get(5);
-            String zipcode = store.get(6);
-            String reviewScore = store.get(7);
-            String openingHours = store.get(8);
-            String closingHours = store.get(9);
-
-            // Get current time in string format for simple comparison (HH:mm:ss)
-            java.util.Date date = new java.util.Date();
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
-            String currentTime = sdf.format(date);
-            
-            // Simple check if store is open (compare strings)
-            String status = "CLOSED";
-            if (currentTime.compareTo(openingHours) >= 0 && currentTime.compareTo(closingHours) <= 0) {
-               status = "OPEN";
-            }
-
-            System.out.println("Store ID: " + storeID);
-            System.out.println("Location: " + street + ", " + city + ", " + state + " " + zipcode);
-            System.out.println("Coordinates: (" + latitude + ", " + longitude + ")");
-            System.out.println("Review Score: " + reviewScore);
-            System.out.println("Status: " + status);
-            System.out.println("Hours: " + openingHours + " - " + closingHours);
+         if (result.isEmpty()) {
+            System.out.println("No stores available.");
+         } else {
+            System.out.println("");
+            System.out.println("AVAILABLE STORES");
             System.out.println("----------------");
+
+            for (List<String> store : result) {
+               String storeID = store.get(0);
+               String latitude = store.get(1);
+               String longitude = store.get(2);
+               String street = store.get(3);
+               String city = store.get(4);
+               String state = store.get(5);
+               String zipcode = store.get(6);
+               String reviewScore = store.get(7);
+               String openingHours = store.get(8);
+               String closingHours = store.get(9);
+
+               // Get current time in string format for simple comparison (HH:mm:ss)
+               java.util.Date date = new java.util.Date();
+               java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
+               String currentTime = sdf.format(date);
+
+               // Simple check if store is open (compare strings)
+               String status = "CLOSED";
+               if (currentTime.compareTo(openingHours) >= 0 && currentTime.compareTo(closingHours) <= 0) {
+                  status = "OPEN";
+               }
+
+               System.out.println("Store ID: " + storeID);
+               System.out.println("Location: " + street + ", " + city + ", " + state + " " + zipcode);
+               System.out.println("Coordinates: (" + latitude + ", " + longitude + ")");
+               System.out.println("Review Score: " + reviewScore);
+               System.out.println("Status: " + status);
+               System.out.println("Hours: " + openingHours + " - " + closingHours);
+               System.out.println("----------------");
+            }
          }
+      } catch (Exception e) {
+         System.err.println("Error viewing stores: " + e.getMessage());
       }
-   } catch (Exception e) {
-      System.err.println("Error viewing stores: " + e.getMessage());
    }
-}
 
    public static void updateOrderStatus(PizzaStore esql) {
    }
