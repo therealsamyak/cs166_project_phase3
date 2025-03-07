@@ -39,6 +39,14 @@ public class PizzaStore {
    static BufferedReader in = new BufferedReader(
          new InputStreamReader(System.in));
 
+   private String currentUserLogin = null;
+   private String currentUserRole = null;
+
+   public void setCurrentUser(String login, String role) {
+      this.currentUserLogin = login;
+      this.currentUserRole = role;
+   }
+
    /**
     * Creates a new instance of PizzaStore
     *
@@ -247,6 +255,7 @@ public class PizzaStore {
          String dbport = args[1];
          String user = args[2];
          esql = new PizzaStore(dbname, dbport, user, "");
+         esql.setCurrentUser("", "");
 
          boolean keepon = true;
          while (keepon) {
@@ -256,13 +265,13 @@ public class PizzaStore {
             System.out.println("1. Create user");
             System.out.println("2. Log in");
             System.out.println("9. < EXIT");
-            String authorisedUser = null;
+
             switch (readChoice()) {
                case 1:
                   CreateUser(esql);
                   break;
                case 2:
-                  authorisedUser = LogIn(esql);
+                  LogIn(esql);
                   break;
                case 9:
                   keepon = false;
@@ -271,7 +280,7 @@ public class PizzaStore {
                   System.out.println("Unrecognized choice!");
                   break;
             }// end switch
-            if (authorisedUser != null) {
+            if (esql.currentUserRole != "") {
                boolean usermenu = true;
                while (usermenu) {
                   System.out.println("MAIN MENU");
@@ -286,14 +295,14 @@ public class PizzaStore {
                                                                    // see detailed information about the order
                   System.out.println("8. View Stores");
 
-                  if (!authorisedUser.equals("customer")) {
+                  if (!esql.currentUserRole.equals("customer")) {
                      // **the following functionalities should only be able to be used by drivers &
                      // managers**
                      System.out.println("9. Update Order Status");
                   }
 
                   // **the following functionalities should ony be able to be used by managers**
-                  if (authorisedUser.equals("manager")) {
+                  if (esql.currentUserRole.equals("manager")) {
                      System.out.println("10. Update Menu");
                      System.out.println("11. Update User");
                   }
@@ -326,7 +335,7 @@ public class PizzaStore {
                         viewStores(esql);
                         break;
                      case 9:
-                        if (!authorisedUser.equals("customer")) {
+                        if (!esql.currentUserRole.equals("customer")) {
                            updateOrderStatus(esql);
                         } else {
                            System.out
@@ -334,14 +343,14 @@ public class PizzaStore {
                         }
                         break;
                      case 10:
-                        if (authorisedUser.equals("manager")) {
+                        if (esql.currentUserRole.equals("manager")) {
                            updateMenu(esql);
                         } else {
                            System.out.println("Unauthorized access! Only managers can update the menu.");
                         }
                         break;
                      case 11:
-                        if (authorisedUser.equals("manager")) {
+                        if (esql.currentUserRole.equals("manager")) {
                            updateUser(esql);
                         } else {
                            System.out.println("Unauthorized access! Only managers can update users.");
@@ -441,7 +450,7 @@ public class PizzaStore {
     * @return User login or null if the user does not exist or credentials are
     * invalid
     **/
-   public static String LogIn(PizzaStore esql) {
+   public static String[] LogIn(PizzaStore esql) {
       try {
          System.out.print("Enter your login: ");
          String login = in.readLine().trim();
@@ -450,19 +459,22 @@ public class PizzaStore {
          String password = in.readLine().trim();
 
          String query = String.format(
-               "SELECT role FROM Users WHERE TRIM(login) = TRIM('%s') AND TRIM(password) = TRIM('%s');",
+               "SELECT login, role FROM Users WHERE TRIM(login) = TRIM('%s') AND TRIM(password) = TRIM('%s');",
                login, password);
 
          List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
-         System.out.print(result);
-
          if (result.size() > 0) {
+            String userLogin = result.get(0).get(0).trim();
+            String role = result.get(0).get(1).trim();
+
             System.out.println("Login successful!");
-            String role = result.get(0).get(0).trim();
-            System.out.println("DEBUG: Role stored in authorisedUser = '" + role + "'");
-            System.out.println("Welcome, " + login + "! Your role is: " + role);
-            return role;
+            System.out.println("Welcome, " + userLogin + "! Your role is: " + role);
+
+            // Set the current user in the PizzaStore instance
+            esql.setCurrentUser(userLogin, role);
+
+            return new String[] { userLogin, role };
          } else {
             System.out.println("Invalid login or password. Please try again.");
             return null;
