@@ -417,7 +417,9 @@ public class PizzaStore {
     **/
    public static void CreateUser(PizzaStore esql) {
       try {
-
+         System.out.println("");
+         System.out.println("CREATE USER");
+         System.out.println("-------------");
          System.out.print("Enter your login: ");
          String login = in.readLine().trim();
 
@@ -438,6 +440,7 @@ public class PizzaStore {
 
             esql.executeUpdate(query);
             System.out.println("User created successfully in the database!");
+            System.out.println("\n");
          } catch (SQLException e) {
             System.err.println("Error inserting user into the database: " + e.getMessage());
          }
@@ -454,6 +457,9 @@ public class PizzaStore {
     **/
    public static void LogIn(PizzaStore esql) {
       try {
+         System.out.println("");
+         System.out.println("LOGIN");
+         System.out.println("-------------");
          System.out.print("Enter your login: ");
          String login = in.readLine().trim();
 
@@ -472,6 +478,7 @@ public class PizzaStore {
 
             System.out.println("Login successful!");
             System.out.println("Welcome, " + userLogin + "! Your role is: " + role);
+            System.out.println("");
 
             // Set the current user in the PizzaStore instance
             esql.setCurrentUser(userLogin, role);
@@ -507,14 +514,14 @@ public class PizzaStore {
          } else {
             // Display profile details
             List<String> profile = result.get(0);
-            System.out.println("\n-------------");
-            System.out.println("User Profile:");
+            System.out.println("");
+            System.out.println("USER PROFILE");
             System.out.println("-------------");
             System.out.println("Login: " + profile.get(0));
             System.out.println("Role: " + profile.get(1));
             System.out.println("Phone Number: " + profile.get(2));
             System.out.println("Favorite Items: " + (profile.get(3) != null ? profile.get(3) : "None"));
-            System.out.println("-------------\n");
+            System.out.println("-------------");
          }
       } catch (SQLException e) {
          System.err.println("Error retrieving user profile: " + e.getMessage());
@@ -522,6 +529,63 @@ public class PizzaStore {
    }
 
    public static void updateProfile(PizzaStore esql) {
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to update your profile.");
+            return;
+         }
+
+         while (true) {
+            System.out.println("");
+            System.out.println("UPDATE PROFILE");
+            System.out.println("-------------");
+            System.out.println("0. View profile");
+            System.out.println("1. Update password");
+            System.out.println("2. Update phone number");
+            System.out.println("3. Update favorite items");
+            System.out.println(".........................");
+            System.out.println("4. Go back");
+
+            switch (readChoice()) {
+               case 0:
+                  viewProfile(esql);
+                  break;
+               case 1:
+                  System.out.print("Enter new password: ");
+                  String newPassword = in.readLine().trim();
+                  String passwordQuery = String.format(
+                        "UPDATE Users SET password = '%s' WHERE login = '%s'",
+                        newPassword, esql.currentUserLogin);
+                  esql.executeUpdate(passwordQuery);
+                  System.out.println("Password updated successfully!");
+                  break;
+               case 2:
+                  System.out.print("Enter new phone number: ");
+                  String newPhone = in.readLine().trim();
+                  String phoneQuery = String.format(
+                        "UPDATE Users SET phoneNum = '%s' WHERE login = '%s'",
+                        newPhone, esql.currentUserLogin);
+                  esql.executeUpdate(phoneQuery);
+                  System.out.println("Phone number updated successfully!");
+                  break;
+               case 3:
+                  System.out.print("Enter your favorite items (comma-separated): ");
+                  String favorites = in.readLine().trim();
+                  String favoritesQuery = String.format(
+                        "UPDATE Users SET favoriteItems = '%s' WHERE login = '%s'",
+                        favorites, esql.currentUserLogin);
+                  esql.executeUpdate(favoritesQuery);
+                  System.out.println("Favorite items updated successfully!");
+                  break;
+               case 4:
+                  return;
+               default:
+                  System.out.println("Unrecognized choice!");
+            }
+         }
+      } catch (Exception e) {
+         System.err.println("Error updating profile: " + e.getMessage());
+      }
    }
 
    public static void viewMenu(PizzaStore esql) {
