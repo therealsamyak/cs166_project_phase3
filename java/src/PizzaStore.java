@@ -451,7 +451,7 @@ public class PizzaStore {
     * @return User login or null if the user does not exist or credentials are
     * invalid
     **/
-   public static String[] LogIn(PizzaStore esql) {
+   public static void LogIn(PizzaStore esql) {
       try {
          System.out.print("Enter your login: ");
          String login = in.readLine().trim();
@@ -474,15 +474,15 @@ public class PizzaStore {
 
             // Set the current user in the PizzaStore instance
             esql.setCurrentUser(userLogin, role);
+            return;
 
-            return new String[] { userLogin, role };
          } else {
             System.out.println("Invalid login or password. Please try again.");
-            return null;
+            return;
          }
       } catch (Exception e) {
          System.err.println("Error during login: " + e.getMessage());
-         return null;
+         return;
       }
    }// end
 
