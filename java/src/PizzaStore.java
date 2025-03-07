@@ -255,6 +255,7 @@ public class PizzaStore {
          String dbport = args[1];
          String user = args[2];
          esql = new PizzaStore(dbname, dbport, user, "");
+         // nobody is logged in yet
          esql.setCurrentUser("", "");
 
          boolean keepon = true;
