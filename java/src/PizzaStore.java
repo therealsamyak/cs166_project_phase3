@@ -281,7 +281,7 @@ public class PizzaStore {
                   System.out.println("Unrecognized choice!");
                   break;
             }// end switch
-            if (esql.currentUserRole != "") {
+            if (!esql.currentUserRole.isEmpty()) {
                boolean usermenu = true;
                while (usermenu) {
                   System.out.println("MAIN MENU");
@@ -359,6 +359,7 @@ public class PizzaStore {
                         break;
                      case 20:
                         usermenu = false;
+                        esql.setCurrentUser("", "");
                         break;
                      default:
                         System.out.println("Unrecognized choice!");
@@ -489,6 +490,35 @@ public class PizzaStore {
    // Rest of the functions definition go in here
 
    public static void viewProfile(PizzaStore esql) {
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("No user is currently logged in.");
+            return;
+         }
+
+         String query = String.format(
+               "SELECT login, role, phoneNum, favoriteItems FROM Users WHERE login = '%s' AND role = '%s';",
+               esql.currentUserLogin, esql.currentUserRole);
+
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+         if (result.isEmpty()) {
+            System.out.println("No profile found for the user: " + esql.currentUserLogin);
+         } else {
+            // Display profile details
+            List<String> profile = result.get(0);
+            System.out.println("\n-------------");
+            System.out.println("User Profile:");
+            System.out.println("-------------");
+            System.out.println("Login: " + profile.get(0));
+            System.out.println("Role: " + profile.get(1));
+            System.out.println("Phone Number: " + profile.get(2));
+            System.out.println("Favorite Items: " + (profile.get(3) != null ? profile.get(3) : "None"));
+            System.out.println("-------------\n");
+         }
+      } catch (SQLException e) {
+         System.err.println("Error retrieving user profile: " + e.getMessage());
+      }
    }
 
    public static void updateProfile(PizzaStore esql) {
