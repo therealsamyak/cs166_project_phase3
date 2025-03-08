@@ -718,6 +718,7 @@ public class PizzaStore {
    public static void viewOrderInfo(PizzaStore esql) {
    }
 
+   // view store
    public static void viewStores(PizzaStore esql) {
       try {
          String query = "SELECT storeID, address, city, state, isOpen, reviewScore FROM Store";
