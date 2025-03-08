@@ -626,7 +626,7 @@ public class PizzaStore {
                   boolean hasWhereClause = false;
 
                   if (!currentTypeFilter.isEmpty()) {
-                     query += " WHERE typeOfItem = \'" + currentTypeFilter.trim() + "\'";
+                     query += " WHERE TRIM(typeOfItem) = \'" + currentTypeFilter.trim() + "\'";
                      hasWhereClause = true;
                   }
                   if (!currentPriceFilter.isEmpty()) {
@@ -642,6 +642,10 @@ public class PizzaStore {
                   if (result.isEmpty()) {
                      System.out.println("\nNo items available in the menu. Please select a different filter.");
                   } else {
+
+                     System.out.println("");
+                     System.out.println("FILTERED MENU");
+                     System.out.println("-------------");
                      for (List<String> item : result) {
                         String itemName = item.get(0);
                         String ingredients = item.get(1);
@@ -715,37 +719,36 @@ public class PizzaStore {
    }
 
    public static void viewStores(PizzaStore esql) {
-      public static void viewStores(PizzaStore esql) {
-   try {
-      String query = "SELECT storeID, address, city, state, isOpen, reviewScore FROM Store";
-      List<List<String>> result = esql.executeQueryAndReturnResult(query);
+      try {
+         String query = "SELECT storeID, address, city, state, isOpen, reviewScore FROM Store";
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
 
-      if (result.isEmpty()) {
-         System.out.println("No stores available.");
-      } else {
-         System.out.println("");
-         System.out.println("AVAILABLE STORES");
-         System.out.println("----------------");
-
-         for (List<String> store : result) {
-            String storeID = store.get(0);
-            String address = store.get(1);
-            String city = store.get(2);
-            String state = store.get(3);
-            String isOpen = store.get(4);
-            String reviewScore = store.get(5);
-
-            System.out.println("Store ID: " + storeID);
-            System.out.println("Location: " + address + ", " + city + ", " + state);
-            System.out.println("Review Score: " + reviewScore);
-            System.out.println("Status: " + (isOpen.equals("1") ? "OPEN" : "CLOSED"));
+         if (result.isEmpty()) {
+            System.out.println("No stores available.");
+         } else {
+            System.out.println("");
+            System.out.println("AVAILABLE STORES");
             System.out.println("----------------");
+
+            for (List<String> store : result) {
+               String storeID = store.get(0);
+               String address = store.get(1);
+               String city = store.get(2);
+               String state = store.get(3);
+               String isOpen = store.get(4);
+               String reviewScore = store.get(5);
+
+               System.out.println("Store ID: " + storeID);
+               System.out.println("Location: " + address + ", " + city + ", " + state);
+               System.out.println("Review Score: " + reviewScore);
+               System.out.println("Status: " + (isOpen.equals("1") ? "OPEN" : "CLOSED"));
+               System.out.println("----------------");
+            }
          }
+      } catch (Exception e) {
+         System.err.println("Error viewing stores: " + e.getMessage());
       }
-   } catch (Exception e) {
-      System.err.println("Error viewing stores: " + e.getMessage());
    }
-}
 
    public static void updateOrderStatus(PizzaStore esql) {
    }
