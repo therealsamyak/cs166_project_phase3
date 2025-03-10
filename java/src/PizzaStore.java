@@ -1166,7 +1166,6 @@ public class PizzaStore {
             System.out.println("");
             System.out.println("UPDATE ORDER");
             System.out.println("-------------");
-            System.out.println("Select an option:");
             System.out.println("0. View all orders");
             System.out.println("1. View recent orders");
             System.out.println("2. Quit");
@@ -1213,6 +1212,117 @@ public class PizzaStore {
    }
 
    public static void updateMenu(PizzaStore esql) {
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to update the menu.");
+            return;
+         }
+
+         while (true) {
+            System.out.println("\nUPDATE MENU");
+            System.out.println("-----------");
+            System.out.println("0. View menu");
+            System.out.println("1. Update an item");
+            System.out.println("2. Add a new item");
+            System.out.println("3. Quit");
+
+            int choice = readChoice();
+            switch (choice) {
+               case 0:
+                  viewMenu(esql);
+                  break;
+
+               case 1:
+                  System.out.print("Enter the name of the item to update: ");
+                  String itemName = in.readLine().trim();
+
+                  String query1 = String.format("SELECT * FROM Items WHERE itemName = '%s';", itemName);
+                  int rowCount = esql.executeQuery(query1);
+                  if (rowCount == 0) {
+                     System.out.println("Item not found.");
+                     continue;
+                  }
+
+                  System.out.println("Select the attribute to update:");
+                  System.out.println("1. Ingredients");
+                  System.out.println("2. Type of Item");
+                  System.out.println("3. Price");
+                  System.out.println("4. Description");
+
+                  int updateChoice = readChoice();
+                  String attribute = "";
+                  String newValue = "";
+
+                  switch (updateChoice) {
+                     case 1:
+                        System.out.print("Enter new ingredients: ");
+                        newValue = in.readLine().trim();
+                        attribute = "ingredients";
+                        break;
+                     case 2:
+                        System.out.print("Enter new type: ");
+                        newValue = in.readLine().trim();
+                        attribute = "typeOfItem";
+                        break;
+                     case 3:
+                        System.out.print("Enter new price: ");
+                        newValue = in.readLine().trim();
+                        attribute = "price";
+                        break;
+                     case 4:
+                        System.out.print("Enter new description: ");
+                        newValue = in.readLine().trim();
+                        attribute = "description";
+                        break;
+                     default:
+                        System.out.println("Invalid choice.");
+                        continue;
+                  }
+
+                  String updateQuery = String.format("UPDATE Items SET %s = '%s' WHERE itemName = '%s';", attribute,
+                        newValue, itemName);
+                  esql.executeUpdate(updateQuery);
+                  System.out.println("Item updated successfully.");
+                  break;
+
+               case 2:
+                  System.out.print("Enter new item name: ");
+                  String newItemName = in.readLine().trim();
+
+                  String checkQuery = String.format("SELECT * FROM Items WHERE itemName = '%s';", newItemName);
+                  int rowCountCheck = esql.executeQuery(checkQuery);
+                  if (rowCountCheck > 0) {
+                     System.out.println("An item with this name already exists.");
+                     continue;
+                  }
+
+                  System.out.print("Enter ingredients: ");
+                  String ingredients = in.readLine().trim();
+                  System.out.print("Enter type of item: ");
+                  String typeOfItem = in.readLine().trim();
+                  System.out.print("Enter price: ");
+                  String price = in.readLine().trim();
+                  System.out.print("Enter description: ");
+                  String description = in.readLine().trim();
+
+                  String insertQuery = String.format(
+                        "INSERT INTO Items (itemName, ingredients, typeOfItem, price, description) VALUES ('%s', '%s', '%s', %s, '%s');",
+                        newItemName, ingredients, typeOfItem, price, description);
+                  esql.executeUpdate(insertQuery);
+                  System.out.println("New item added successfully.");
+                  break;
+
+               case 3:
+                  return;
+
+               default:
+                  System.out.println("Invalid input. Please enter a valid option.");
+            }
+         }
+
+      } catch (Exception e) {
+         System.err.println("Error updating menu: " + e.getMessage());
+      }
    }
 
    public static void updateUser(PizzaStore esql) {
