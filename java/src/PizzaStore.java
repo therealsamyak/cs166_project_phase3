@@ -860,7 +860,105 @@ public class PizzaStore {
    }
 
    public static void viewOrderInfo(PizzaStore esql) {
+   try {
+      if (esql.currentUserLogin.isEmpty()) {
+         System.out.println("You must be logged in to view order information.");
+         return;
+      }
+
+      System.out.print("Enter the Order ID you want to view: ");
+      String orderID = in.readLine().trim();
+      
+      // First check if the order exists and if the user has permission to view it
+      String checkQuery;
+      
+      if (esql.currentUserRole.equals("customer")) {
+         // Customers can only view their own orders
+         checkQuery = String.format(
+            "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %s AND login = '%s';",
+            orderID, esql.currentUserLogin);
+      } else {
+         // Managers and drivers can view all orders
+         checkQuery = String.format(
+            "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %s;",
+            orderID);
+      }
+      
+      int count = Integer.parseInt(esql.executeQueryAndReturnResult(checkQuery).get(0).get(0));
+      
+      if (count == 0) {
+         if (esql.currentUserRole.equals("customer")) {
+            System.out.println("Order not found or you don't have permission to view this order.");
+         } else {
+            System.out.println("Order not found.");
+         }
+         return;
+      }
+      
+      // Get the basic order information
+      String orderQuery = String.format(
+         "SELECT login, storeID, orderTimestamp, totalPrice, orderStatus " +
+         "FROM FoodOrder WHERE orderID = %s;",
+         orderID);
+      
+      List<List<String>> orderResult = esql.executeQueryAndReturnResult(orderQuery);
+      
+      if (orderResult.isEmpty()) {
+         System.out.println("Error retrieving order information.");
+         return;
+      }
+      
+      List<String> orderInfo = orderResult.get(0);
+      String customerLogin = orderInfo.get(0);
+      String storeID = orderInfo.get(1);
+      String timestamp = orderInfo.get(2);
+      String totalPrice = orderInfo.get(3);
+      String status = orderInfo.get(4);
+      
+      // Get the ordered items with quantities
+      String itemsQuery = String.format(
+         "SELECT i.itemName, o.quantity, i.price " +
+         "FROM OrderItem o JOIN Items i ON o.itemID = i.itemID " +
+         "WHERE o.orderID = %s;",
+         orderID);
+      
+      List<List<String>> itemsResult = esql.executeQueryAndReturnResult(itemsQuery);
+      
+      // Display all the order information
+      System.out.println("\nORDER DETAILS - Order #" + orderID);
+      System.out.println("------------------------------------------");
+      System.out.println("Customer: " + customerLogin);
+      System.out.println("Store: " + storeID);
+      System.out.println("Date/Time: " + timestamp);
+      System.out.println("Status: " + status);
+      System.out.println("Total Price: $" + totalPrice);
+      System.out.println("\nORDERED ITEMS:");
+      System.out.println("------------------------------------------");
+      System.out.printf("%-30s %-10s %-10s %-10s\n", "Item", "Quantity", "Unit Price", "Subtotal");
+      System.out.println("------------------------------------------");
+      
+      if (itemsResult.isEmpty()) {
+         System.out.println("No items found for this order.");
+      } else {
+         double calculatedTotal = 0.0;
+         for (List<String> item : itemsResult) {
+            String itemName = item.get(0);
+            int quantity = Integer.parseInt(item.get(1));
+            double unitPrice = Double.parseDouble(item.get(2));
+            double subtotal = quantity * unitPrice;
+            calculatedTotal += subtotal;
+            
+            System.out.printf("%-30s %-10d $%-9.2f $%-9.2f\n", 
+                  itemName, quantity, unitPrice, subtotal);
+         }
+         System.out.println("------------------------------------------");
+         System.out.printf("%-52s $%-9.2f\n", "Calculated Total:", calculatedTotal);
+      }
+      
+   } catch (Exception e) {
+      System.err.println("Error viewing order information: " + e.getMessage());
    }
+}
 
    // view store
    public static void viewStores(PizzaStore esql) {
