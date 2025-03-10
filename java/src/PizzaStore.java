@@ -486,7 +486,7 @@ public class PizzaStore {
             return;
 
          } else {
-            System.out.println("Invalid login or password. Please try again.");
+            System.out.println("Invalid login or password. Please try again.\n");
             return;
          }
       } catch (Exception e) {
@@ -859,106 +859,107 @@ public class PizzaStore {
       }
    }
 
+   // view order info
    public static void viewOrderInfo(PizzaStore esql) {
-   try {
-      if (esql.currentUserLogin.isEmpty()) {
-         System.out.println("You must be logged in to view order information.");
-         return;
-      }
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to view order information.");
+            return;
+         }
 
-      System.out.print("Enter the Order ID you want to view: ");
-      String orderID = in.readLine().trim();
-      
-      // First check if the order exists and if the user has permission to view it
-      String checkQuery;
-      
-      if (esql.currentUserRole.equals("customer")) {
-         // Customers can only view their own orders
-         checkQuery = String.format(
-            "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %s AND login = '%s';",
-            orderID, esql.currentUserLogin);
-      } else {
-         // Managers and drivers can view all orders
-         checkQuery = String.format(
-            "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %s;",
-            orderID);
-      }
-      
-      int count = Integer.parseInt(esql.executeQueryAndReturnResult(checkQuery).get(0).get(0));
-      
-      if (count == 0) {
+         System.out.print("Enter the Order ID you want to view: ");
+         String orderID = in.readLine().trim();
+
+         // First check if the order exists and if the user has permission to view it
+         String checkQuery;
+
          if (esql.currentUserRole.equals("customer")) {
-            System.out.println("Order not found or you don't have permission to view this order.");
+            // Customers can only view their own orders
+            checkQuery = String.format(
+                  "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %s AND login = '%s';",
+                  orderID, esql.currentUserLogin);
          } else {
-            System.out.println("Order not found.");
+            // Managers and drivers can view all orders
+            checkQuery = String.format(
+                  "SELECT COUNT(*) FROM FoodOrder WHERE orderID = %s;",
+                  orderID);
          }
-         return;
-      }
-      
-      // Get the basic order information
-      String orderQuery = String.format(
-         "SELECT login, storeID, orderTimestamp, totalPrice, orderStatus " +
-         "FROM FoodOrder WHERE orderID = %s;",
-         orderID);
-      
-      List<List<String>> orderResult = esql.executeQueryAndReturnResult(orderQuery);
-      
-      if (orderResult.isEmpty()) {
-         System.out.println("Error retrieving order information.");
-         return;
-      }
-      
-      List<String> orderInfo = orderResult.get(0);
-      String customerLogin = orderInfo.get(0);
-      String storeID = orderInfo.get(1);
-      String timestamp = orderInfo.get(2);
-      String totalPrice = orderInfo.get(3);
-      String status = orderInfo.get(4);
-      
-      // Get the ordered items with quantities
-      String itemsQuery = String.format(
-         "SELECT i.itemName, o.quantity, i.price " +
-         "FROM OrderItem o JOIN Items i ON o.itemID = i.itemID " +
-         "WHERE o.orderID = %s;",
-         orderID);
-      
-      List<List<String>> itemsResult = esql.executeQueryAndReturnResult(itemsQuery);
-      
-      // Display all the order information
-      System.out.println("\nORDER DETAILS - Order #" + orderID);
-      System.out.println("------------------------------------------");
-      System.out.println("Customer: " + customerLogin);
-      System.out.println("Store: " + storeID);
-      System.out.println("Date/Time: " + timestamp);
-      System.out.println("Status: " + status);
-      System.out.println("Total Price: $" + totalPrice);
-      System.out.println("\nORDERED ITEMS:");
-      System.out.println("------------------------------------------");
-      System.out.printf("%-30s %-10s %-10s %-10s\n", "Item", "Quantity", "Unit Price", "Subtotal");
-      System.out.println("------------------------------------------");
-      
-      if (itemsResult.isEmpty()) {
-         System.out.println("No items found for this order.");
-      } else {
-         double calculatedTotal = 0.0;
-         for (List<String> item : itemsResult) {
-            String itemName = item.get(0);
-            int quantity = Integer.parseInt(item.get(1));
-            double unitPrice = Double.parseDouble(item.get(2));
-            double subtotal = quantity * unitPrice;
-            calculatedTotal += subtotal;
-            
-            System.out.printf("%-30s %-10d $%-9.2f $%-9.2f\n", 
-                  itemName, quantity, unitPrice, subtotal);
+
+         int count = Integer.parseInt(esql.executeQueryAndReturnResult(checkQuery).get(0).get(0));
+
+         if (count == 0) {
+            if (esql.currentUserRole.equals("customer")) {
+               System.out.println("Order not found or you don't have permission to view this order.");
+            } else {
+               System.out.println("Order not found.");
+            }
+            return;
          }
-         System.out.println("------------------------------------------");
-         System.out.printf("%-52s $%-9.2f\n", "Calculated Total:", calculatedTotal);
+
+         // Get the basic order information
+         String orderQuery = String.format(
+               "SELECT login, storeID, orderTimestamp, totalPrice, orderStatus " +
+                     "FROM FoodOrder WHERE orderID = %s;",
+               orderID);
+
+         List<List<String>> orderResult = esql.executeQueryAndReturnResult(orderQuery);
+
+         if (orderResult.isEmpty()) {
+            System.out.println("Error retrieving order information.");
+            return;
+         }
+
+         List<String> orderInfo = orderResult.get(0);
+         String customerLogin = orderInfo.get(0);
+         String storeID = orderInfo.get(1);
+         String timestamp = orderInfo.get(2);
+         String totalPrice = orderInfo.get(3);
+         String status = orderInfo.get(4);
+
+         // Get the ordered items with quantities
+         String itemsQuery = String.format(
+               "SELECT i.itemName, o.quantity, i.price " +
+                     "FROM ItemsInOrder o JOIN Items i ON o.itemName = i.itemName " +
+                     "WHERE o.orderID = %s;",
+               orderID);
+
+         List<List<String>> itemsResult = esql.executeQueryAndReturnResult(itemsQuery);
+
+         // Display all the order information
+         System.out.println("\nORDER DETAILS - Order #" + orderID);
+         System.out.println("--------------------------------------------------------------------------");
+         System.out.println("Customer: " + customerLogin);
+         System.out.println("Store: " + storeID);
+         System.out.println("Date/Time: " + timestamp);
+         System.out.println("Status: " + status);
+         System.out.println("Total Price: $" + totalPrice);
+         System.out.println("\n");
+         System.out.println("----------------------------------------------------------------");
+         System.out.printf("%-30s %-10s %-10s %-10s\n", "Item", "Quantity", "Unit Price", "Subtotal");
+         System.out.println("----------------------------------------------------------------");
+
+         if (itemsResult.isEmpty()) {
+            System.out.println("No items found for this order.");
+         } else {
+            double calculatedTotal = 0.0;
+            for (List<String> item : itemsResult) {
+               String itemName = item.get(0);
+               int quantity = Integer.parseInt(item.get(1));
+               double unitPrice = Double.parseDouble(item.get(2));
+               double subtotal = quantity * unitPrice;
+               calculatedTotal += subtotal;
+
+               System.out.printf("%-30s %-10d $%-9.2f $%-9.2f\n",
+                     itemName, quantity, unitPrice, subtotal);
+            }
+            System.out.println("----------------------------------------------------------------");
+            System.out.printf("%-52s $%-9.2f\n", "Calculated Total:", calculatedTotal);
+         }
+
+      } catch (Exception e) {
+         System.err.println("Error viewing order information: " + e.getMessage());
       }
-      
-   } catch (Exception e) {
-      System.err.println("Error viewing order information: " + e.getMessage());
    }
-}
 
    // view store
    public static void viewStores(PizzaStore esql) {
@@ -993,7 +994,62 @@ public class PizzaStore {
       }
    }
 
+   // update order status
    public static void updateOrderStatus(PizzaStore esql) {
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to update an order status.");
+            return;
+         }
+
+         while (true) {
+            System.out.println("");
+            System.out.println("UPDATE ORDER");
+            System.out.println("-------------");
+            System.out.println("Select an option:");
+            System.out.println("0. View all orders");
+            System.out.println("1. View recent orders");
+            System.out.println("2. Quit");
+            System.out.println("10000 (or higher). Update that Specific OrderID");
+
+            int choice = readChoice();
+
+            if (choice == 0) {
+               viewAllOrders(esql);
+            } else if (choice == 1) {
+               viewRecentOrders(esql);
+            } else if (choice == 2) {
+               return;
+            } else if (choice >= 10000) {
+               String orderID = String.valueOf(choice);
+
+               System.out.print("Enter the new status (complete/incomplete): ");
+               String newStatus = in.readLine().trim().toLowerCase();
+
+               if (!newStatus.equals("complete") && !newStatus.equals("incomplete")) {
+                  System.out.println("Invalid status. Please enter 'complete' or 'incomplete'.");
+                  continue;
+               }
+
+               String query = String.format(
+                     "UPDATE FoodOrder SET orderStatus = '%s' WHERE orderID = '%s';",
+                     newStatus, orderID);
+
+               try {
+                  esql.executeUpdate(query);
+                  System.out.println("Order status updated successfully.");
+               } catch (Exception e) {
+                  System.out.println("Order ID not found or update failed.");
+               }
+               return;
+
+            } else {
+               System.out.println("Invalid input. Please enter 0, 1, 2, or an Order ID 10000 or higher.");
+            }
+         }
+      } catch (Exception e) {
+         System.err.println("Error updating order status: " + e.getMessage());
+      }
    }
 
    public static void updateMenu(PizzaStore esql) {
