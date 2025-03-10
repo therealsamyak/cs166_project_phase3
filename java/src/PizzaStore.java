@@ -706,184 +706,176 @@ public class PizzaStore {
       }
    }
 
+   // place order
    public static void placeOrder(PizzaStore esql) {
-   try {
-      if (esql.currentUserLogin.isEmpty()) {
-         System.out.println("You must be logged in to place an order.");
-         return;
-      }
-
-      // Step 1: Ask the user which store they want to order from
-      System.out.println("\nAVAILABLE STORES");
-      System.out.println("----------------");
-      
-      String storeQuery = "SELECT storeID, address, city, state, isOpen FROM Store";
-      List<List<String>> stores = esql.executeQueryAndReturnResult(storeQuery);
-      
-      if (stores.isEmpty()) {
-         System.out.println("No stores available to order from.");
-         return;
-      }
-
-      // Display stores and check if they're open
-      List<Integer> openStoreIDs = new ArrayList<>();
-      for (List<String> store : stores) {
-         int storeID = Integer.parseInt(store.get(0));
-         String address = store.get(1);
-         String city = store.get(2);
-         String state = store.get(3);
-         boolean isOpen = store.get(4).equals("1");
-         
-         System.out.printf("Store ID: %d - %s, %s, %s - %s\n", 
-               storeID, address, city, state, (isOpen ? "OPEN" : "CLOSED"));
-         
-         if (isOpen) {
-            openStoreIDs.add(storeID);
-         }
-      }
-      
-      if (openStoreIDs.isEmpty()) {
-         System.out.println("Sorry, no stores are currently open for ordering.");
-         return;
-      }
-      
-      System.out.print("\nEnter the Store ID you want to order from: ");
-      int selectedStoreID = Integer.parseInt(in.readLine().trim());
-      
-      // Verify the store exists and is open
-      if (!openStoreIDs.contains(selectedStoreID)) {
-         System.out.println("Invalid store selection or the store is closed.");
-         return;
-      }
-      
-      // Step 2: Generate a new orderID
-      String maxOrderIDQuery = "SELECT MAX(orderID) FROM FoodOrder";
-      int newOrderID = 10000; // Default starting order ID
-      
-      List<List<String>> maxIDResult = esql.executeQueryAndReturnResult(maxOrderIDQuery);
-      if (!maxIDResult.isEmpty() && maxIDResult.get(0).get(0) != null) {
-         newOrderID = Integer.parseInt(maxIDResult.get(0).get(0)) + 1;
-      }
-      
-      // Step 3: Initialize the order with zero total price
-      String initOrderQuery = String.format(
-            "INSERT INTO FoodOrder (orderID, login, storeID, orderTimestamp, totalPrice, orderStatus) " +
-            "VALUES (%d, '%s', %d, NOW(), 0.00, 'incomplete')",
-            newOrderID, esql.currentUserLogin, selectedStoreID);
-      
-      esql.executeUpdate(initOrderQuery);
-      System.out.println("\nStarted a new order with ID: " + newOrderID);
-      
-      // Step 4: Show menu and allow user to add items
-      double totalPrice = 0.0;
-      boolean continueShopping = true;
-      
-      while (continueShopping) {
-         // Display the menu
-         System.out.println("\nMENU ITEMS");
-         System.out.println("----------");
-         
-         String menuQuery = String.format(
-               "SELECT itemName, price, ingredients, typeOfItem FROM Items " +
-               "ORDER BY typeOfItem, itemName");
-         
-         List<List<String>> menuItems = esql.executeQueryAndReturnResult(menuQuery);
-         
-         if (menuItems.isEmpty()) {
-            System.out.println("No items available on the menu.");
-            // If no items are available, we need to delete the empty order
-            String deleteOrderQuery = String.format("DELETE FROM FoodOrder WHERE orderID = %d", newOrderID);
-            esql.executeUpdate(deleteOrderQuery);
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to place an order.");
             return;
          }
-         
-         // Display items grouped by type
-         String currentType = "";
-         for (List<String> item : menuItems) {
-            String itemName = item.get(0);
-            double price = Double.parseDouble(item.get(1));
-            String ingredients = item.get(2);
-            String type = item.get(3);
-            
-            if (!type.equals(currentType)) {
-               System.out.println("\n" + type.toUpperCase() + ":");
-               currentType = type;
+
+         System.out.println("\nAVAILABLE STORES");
+         System.out.println("----------------");
+
+         String storeQuery = "SELECT storeID, address, city, state, isOpen FROM Store ORDER BY isOpen DESC";
+         List<List<String>> stores = esql.executeQueryAndReturnResult(storeQuery);
+
+         if (stores.isEmpty()) {
+            System.out.println("No stores available to order from.");
+            return;
+         }
+
+         List<Integer> openStoreIDs = new ArrayList<>();
+         for (List<String> store : stores) {
+            int storeID = Integer.parseInt(store.get(0));
+            String address = store.get(1);
+            String city = store.get(2);
+            String state = store.get(3);
+            String isOpen = store.get(4);
+
+            System.out.printf("Store ID: %d - %s, %s, %s - %s\n",
+                  storeID, address, city, state,
+                  (isOpen.equals("yes") ? "OPEN" : "CLOSED"));
+
+            if (isOpen.equals("yes")) {
+               openStoreIDs.add(storeID);
             }
-            
-            System.out.printf("- %s ($%.2f) - %s\n", itemName, price, ingredients);
          }
-         
-         // Ask user for item and quantity
-         System.out.print("\nEnter the item name (or type 'done' to finish ordering): ");
-         String itemName = in.readLine().trim();
-         
-         if (itemName.equalsIgnoreCase("done")) {
-            continueShopping = false;
-            continue;
+
+         if (openStoreIDs.isEmpty()) {
+            System.out.println("Sorry, no stores are currently open for ordering.");
+            return;
          }
-         
-         // Verify the item exists
-         String itemCheckQuery = String.format(
-               "SELECT price FROM Items WHERE TRIM(itemName) = TRIM('%s')",
-               itemName);
-         
-         List<List<String>> itemCheck = esql.executeQueryAndReturnResult(itemCheckQuery);
-         
-         if (itemCheck.isEmpty()) {
-            System.out.println("Item not found. Please try again.");
-            continue;
+
+         System.out.print("\nEnter the Store ID you want to order from (q to quit): ");
+         String idChoice = in.readLine().trim();
+         if (idChoice.equals("q")) {
+            return;
          }
-         
-         double itemPrice = Double.parseDouble(itemCheck.get(0).get(0));
-         
-         System.out.print("Enter quantity: ");
-         int quantity = Integer.parseInt(in.readLine().trim());
-         
-         if (quantity <= 0) {
-            System.out.println("Quantity must be greater than zero.");
-            continue;
+         int selectedStoreID = Integer.parseInt(idChoice);
+
+         if (!openStoreIDs.contains(selectedStoreID)) {
+            System.out.println("Invalid store selection or the store is closed.");
+            return;
          }
-         
-         // Add item to the order
-         String addItemQuery = String.format(
-               "INSERT INTO ItemsInOrder (orderID, itemName, quantity) " +
-               "VALUES (%d, '%s', %d)",
-               newOrderID, itemName, quantity);
-         
-         esql.executeUpdate(addItemQuery);
-         
-         double subtotal = itemPrice * quantity;
-         totalPrice += subtotal;
-         
-         System.out.printf("Added %d x %s (Subtotal: $%.2f)\n", quantity, itemName, subtotal);
+
+         String maxOrderIDQuery = "SELECT MAX(orderID) FROM FoodOrder";
+         int newOrderID = 10000;
+
+         List<List<String>> maxIDResult = esql.executeQueryAndReturnResult(maxOrderIDQuery);
+         if (!maxIDResult.isEmpty() && maxIDResult.get(0).get(0) != null) {
+            newOrderID = Integer.parseInt(maxIDResult.get(0).get(0)) + 1;
+         }
+
+         String initOrderQuery = String.format(
+               "INSERT INTO FoodOrder (orderID, login, storeID, orderTimestamp, totalPrice, orderStatus) " +
+                     "VALUES (%d, '%s', %d, TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS')::timestamp, 0.00, 'incomplete')",
+               newOrderID, esql.currentUserLogin, selectedStoreID);
+
+         esql.executeUpdate(initOrderQuery);
+         System.out.println("\nStarted a new order with ID: " + newOrderID);
+
+         double totalPrice = 0.0;
+         boolean continueShopping = true;
+
+         while (continueShopping) {
+            System.out.println("\nMENU ITEMS");
+            System.out.println("----------");
+
+            String menuQuery = String.format(
+                  "SELECT itemName, price, ingredients, typeOfItem FROM Items " +
+                        "ORDER BY typeOfItem, itemName");
+
+            List<List<String>> menuItems = esql.executeQueryAndReturnResult(menuQuery);
+
+            if (menuItems.isEmpty()) {
+               System.out.println("No items available on the menu.");
+               String deleteOrderQuery = String.format("DELETE FROM FoodOrder WHERE orderID = %d", newOrderID);
+               esql.executeUpdate(deleteOrderQuery);
+               return;
+            }
+
+            String currentType = "";
+            for (List<String> item : menuItems) {
+               String itemName = item.get(0);
+               double price = Double.parseDouble(item.get(1));
+               String ingredients = item.get(2);
+               String type = item.get(3);
+
+               if (!type.equals(currentType)) {
+                  System.out.println("\n" + type.toUpperCase() + ":");
+                  currentType = type;
+               }
+
+               System.out.printf("- %s ($%.2f) - %s\n", itemName, price, ingredients);
+            }
+
+            System.out.print("\nEnter the item name (or type 'done' to finish ordering): ");
+            String itemName = in.readLine().trim();
+
+            if (itemName.equalsIgnoreCase("done")) {
+               continueShopping = false;
+               continue;
+            }
+
+            String itemCheckQuery = String.format(
+                  "SELECT price FROM Items WHERE TRIM(itemName) = TRIM('%s')",
+                  itemName);
+
+            List<List<String>> itemCheck = esql.executeQueryAndReturnResult(itemCheckQuery);
+
+            if (itemCheck.isEmpty()) {
+               System.out.println("Item not found. Please try again.");
+               continue;
+            }
+
+            double itemPrice = Double.parseDouble(itemCheck.get(0).get(0));
+
+            System.out.print("Enter quantity: ");
+            int quantity = Integer.parseInt(in.readLine().trim());
+
+            if (quantity <= 0) {
+               System.out.println("Quantity must be greater than zero.");
+               continue;
+            }
+
+            String addItemQuery = String.format(
+                  "INSERT INTO ItemsInOrder (orderID, itemName, quantity) " +
+                        "VALUES (%d, '%s', %d)",
+                  newOrderID, itemName, quantity);
+
+            esql.executeUpdate(addItemQuery);
+
+            double subtotal = itemPrice * quantity;
+            totalPrice += subtotal;
+
+            System.out.printf("Added %d x %s (Subtotal: $%.2f)\n", quantity, itemName, subtotal);
+         }
+
+         if (totalPrice > 0) {
+            String updatePriceQuery = String.format(
+                  "UPDATE FoodOrder SET totalPrice = %.2f WHERE orderID = %d",
+                  totalPrice, newOrderID);
+
+            esql.executeUpdate(updatePriceQuery);
+
+            System.out.println("\nORDER SUMMARY");
+            System.out.println("-------------");
+            System.out.println("Order ID: " + newOrderID);
+            System.out.println("Store ID: " + selectedStoreID);
+            System.out.printf("Total Price: $%.2f\n", totalPrice);
+            System.out.println("Status: incomplete");
+            System.out.println("\nThank you for your order!");
+         } else {
+            String deleteOrderQuery = String.format("DELETE FROM FoodOrder WHERE orderID = %d", newOrderID);
+            esql.executeUpdate(deleteOrderQuery);
+            System.out.println("Order cancelled - no items were added.");
+         }
+
+      } catch (Exception e) {
+         System.err.println("Error placing order: " + e.getMessage());
       }
-      
-      // Step 5: Update the total price of the order
-      if (totalPrice > 0) {
-         String updatePriceQuery = String.format(
-               "UPDATE FoodOrder SET totalPrice = %.2f WHERE orderID = %d",
-               totalPrice, newOrderID);
-         
-         esql.executeUpdate(updatePriceQuery);
-         
-         System.out.println("\nORDER SUMMARY");
-         System.out.println("-------------");
-         System.out.println("Order ID: " + newOrderID);
-         System.out.println("Store ID: " + selectedStoreID);
-         System.out.printf("Total Price: $%.2f\n", totalPrice);
-         System.out.println("Status: incomplete");
-         System.out.println("\nThank you for your order!");
-      } else {
-         // If the user didn't add any items, delete the empty order
-         String deleteOrderQuery = String.format("DELETE FROM FoodOrder WHERE orderID = %d", newOrderID);
-         esql.executeUpdate(deleteOrderQuery);
-         System.out.println("Order cancelled - no items were added.");
-      }
-      
-   } catch (Exception e) {
-      System.err.println("Error placing order: " + e.getMessage());
    }
-}
 
    // view all order
    public static void viewAllOrders(PizzaStore esql) {
@@ -921,8 +913,6 @@ public class PizzaStore {
 
             // customer
             if (esql.currentUserRole.equals("customer")) {
-               System.out.println("ORDER HISTORY");
-               System.out.println("-------------");
                System.out.println("OrderID\tStoreID\tTimestamp\t\tTotal Price\tStatus");
                System.out.println("----------------------------------------------------------");
                for (List<String> order : result) {
@@ -936,8 +926,6 @@ public class PizzaStore {
                }
             } else {
                // managers + drivers
-               System.out.println("ORDER HISTORY");
-               System.out.println("-------------");
                System.out.println("OrderID Customer\tStoreID\tTimestamp\t\tTotal Price\tStatus");
                System.out
                      .println("------------------------------------------------------------------------------------");
@@ -997,8 +985,6 @@ public class PizzaStore {
 
             // customer
             if (esql.currentUserRole.equals("customer")) {
-               System.out.println("ORDER HISTORY");
-               System.out.println("-------------");
                System.out.println("OrderID\tStoreID\tTimestamp\t\tTotal Price\tStatus");
                System.out.println("----------------------------------------------------------");
                for (List<String> order : result) {
@@ -1012,8 +998,6 @@ public class PizzaStore {
                }
             } else {
                // managers + drivers
-               System.out.println("ORDER HISTORY");
-               System.out.println("-------------");
                System.out.println("OrderID Customer\tStoreID\tTimestamp\t\tTotal Price\tStatus");
                System.out
                      .println("------------------------------------------------------------------------------------");
