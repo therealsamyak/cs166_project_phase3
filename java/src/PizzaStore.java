@@ -1326,6 +1326,123 @@ public class PizzaStore {
    }
 
    public static void updateUser(PizzaStore esql) {
+      try {
+         String currentUserLogin = "";
+         boolean validUser = false;
+
+         while (!validUser) {
+            System.out.print("Enter the login of the user to update: ");
+            currentUserLogin = in.readLine().trim();
+
+            String checkUserQuery = String.format("SELECT * FROM Users WHERE login = '%s';", currentUserLogin);
+            int userExists = esql.executeQuery(checkUserQuery);
+
+            if (userExists > 0) {
+               validUser = true;
+            } else {
+               System.out.println("User not found. Please try again.");
+            }
+         }
+
+         while (true) {
+            System.out.println("\nUPDATE USER DETAILS");
+            if (validUser) {
+               System.out.println("Selected User: " + currentUserLogin);
+            }
+            System.out.println("--------------------");
+            System.out.println("0. View user details");
+            System.out.println("1. Update password");
+            System.out.println("2. Update role");
+            System.out.println("3. Update favorite items");
+            System.out.println("4. Update phone number");
+            System.out.println("5. Change user to update");
+            System.out.println("6. Quit");
+
+            int choice = readChoice();
+            switch (choice) {
+               case 0:
+                  String viewQuery = String.format("SELECT * FROM Users WHERE login = '%s';", currentUserLogin);
+                  List<List<String>> userDetails = esql.executeQueryAndReturnResult(viewQuery);
+
+                  System.out.println("\nUser Details:");
+                  for (List<String> record : userDetails) {
+                     System.out.println("Login: " + record.get(0));
+                     System.out.println("Password: " + record.get(1));
+                     System.out.println("Role: " + record.get(2));
+                     System.out.println("Favorite Items: " + record.get(3));
+                     System.out.println("Phone Number: " + record.get(4));
+                  }
+                  break;
+
+               case 1:
+                  System.out.print("Enter new password: ");
+                  String newPassword = in.readLine().trim();
+
+                  String updatePasswordQuery = String.format("UPDATE Users SET password = '%s' WHERE login = '%s';",
+                        newPassword, currentUserLogin);
+                  esql.executeUpdate(updatePasswordQuery);
+                  System.out.println("Password updated successfully.");
+                  break;
+
+               case 2:
+                  System.out.print("Enter new role: ");
+                  String newRole = in.readLine().trim();
+
+                  String updateRoleQuery = String.format("UPDATE Users SET role = '%s' WHERE login = '%s';", newRole,
+                        currentUserLogin);
+                  esql.executeUpdate(updateRoleQuery);
+                  System.out.println("Role updated successfully.");
+                  break;
+
+               case 3:
+                  System.out.print("Enter new favorite items: ");
+                  String newFavorites = in.readLine().trim();
+
+                  String updateFavoritesQuery = String.format(
+                        "UPDATE Users SET favoriteItems = '%s' WHERE login = '%s';", newFavorites, currentUserLogin);
+                  esql.executeUpdate(updateFavoritesQuery);
+                  System.out.println("Favorite items updated successfully.");
+                  break;
+
+               case 4:
+                  System.out.print("Enter new phone number: ");
+                  String newPhoneNum = in.readLine().trim();
+
+                  String updatePhoneQuery = String.format("UPDATE Users SET phoneNum = '%s' WHERE login = '%s';",
+                        newPhoneNum, currentUserLogin);
+                  esql.executeUpdate(updatePhoneQuery);
+                  System.out.println("Phone number updated successfully.");
+                  break;
+
+               case 5:
+                  validUser = false;
+                  while (!validUser) {
+                     System.out.print("Enter the login of the new user to update: ");
+                     currentUserLogin = in.readLine().trim();
+
+                     String checkNewUserQuery = String.format("SELECT * FROM Users WHERE login = '%s';",
+                           currentUserLogin);
+                     int newUserExists = esql.executeQuery(checkNewUserQuery);
+
+                     if (newUserExists > 0) {
+                        validUser = true;
+                     } else {
+                        System.out.println("User not found. Please try again.");
+                     }
+                  }
+                  break;
+
+               case 6:
+                  return;
+
+               default:
+                  System.out.println("Invalid input. Please enter a valid option.");
+            }
+         }
+
+      } catch (Exception e) {
+         System.err.println("Error updating user details: " + e.getMessage());
+      }
    }
 
 }// end PizzaStore
