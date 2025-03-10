@@ -709,145 +709,155 @@ public class PizzaStore {
    public static void placeOrder(PizzaStore esql) {
    }
 
-  public static void viewAllOrders(PizzaStore esql) {
-   try {
-      if (esql.currentUserLogin.isEmpty()) {
-         System.out.println("You must be logged in to view orders.");
-         return;
-      }
-
-      String query;
-      
-      // Different query based on user role
-      if (esql.currentUserRole.equals("customer")) {
-         // Customers can only see their own orders
-         query = String.format(
-               "SELECT orderID, storeID, orderTimestamp, totalPrice, orderStatus " +
-               "FROM Orders " +
-               "WHERE customerLogin = '%s' " +
-               "ORDER BY orderTimestamp DESC;",
-               esql.currentUserLogin);
-      } else {
-         // Managers and drivers can see all orders
-         query = "SELECT orderID, customerLogin, storeID, orderTimestamp, totalPrice, orderStatus " +
-                "FROM Orders " +
-                "ORDER BY orderTimestamp DESC;";
-      }
-
-      List<List<String>> result = esql.executeQueryAndReturnResult(query);
-
-      if (result.isEmpty()) {
-         System.out.println("\nNo orders found.");
-      } else {
-         System.out.println("");
-         System.out.println("ORDER HISTORY");
-         System.out.println("-------------");
-         
-         // Different display format based on user role
-         if (esql.currentUserRole.equals("customer")) {
-            System.out.println("OrderID\tStoreID\tTimestamp\t\tTotal Price\tStatus");
-            System.out.println("----------------------------------------------------------");
-            for (List<String> order : result) {
-               System.out.printf("%s\t%s\t%s\t$%s\t%s\n", 
-                     order.get(0), // orderID
-                     order.get(1), // storeID
-                     order.get(2), // orderTimestamp
-                     order.get(3), // totalPrice
-                     order.get(4)  // orderStatus
-               );
-            }
-         } else {
-            // More detailed view for managers and drivers
-            System.out.println("OrderID\tCustomer\tStoreID\tTimestamp\t\tTotal Price\tStatus");
-            System.out.println("-----------------------------------------------------------------------");
-            for (List<String> order : result) {
-               System.out.printf("%s\t%s\t%s\t%s\t$%s\t%s\n", 
-                     order.get(0), // orderID
-                     order.get(1), // customerLogin
-                     order.get(2), // storeID
-                     order.get(3), // orderTimestamp
-                     order.get(4), // totalPrice
-                     order.get(5)  // orderStatus
-               );
-            }
+   // view all order
+   public static void viewAllOrders(PizzaStore esql) {
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to view orders.");
+            return;
          }
-         System.out.println("-------------");
-      }
-   } catch (Exception e) {
-      System.err.println("Error viewing order history: " + e.getMessage());
-   }
-}
 
-public static void viewRecentOrders(PizzaStore esql) {
-   try {
-      if (esql.currentUserLogin.isEmpty()) {
-         System.out.println("You must be logged in to view orders.");
-         return;
-      }
+         String query;
 
-      String query;
-      
-      // Different query based on user role, limited to 5 results
-      if (esql.currentUserRole.equals("customer")) {
-         // Customers can only see their own orders
-         query = String.format(
-               "SELECT orderID, storeID, orderTimestamp, totalPrice, orderStatus " +
-               "FROM Orders " +
-               "WHERE customerLogin = '%s' " +
-               "ORDER BY orderTimestamp DESC " +
-               "LIMIT 5;",
-               esql.currentUserLogin);
-      } else {
-         // Managers and drivers can see all orders
-         query = "SELECT orderID, customerLogin, storeID, orderTimestamp, totalPrice, orderStatus " +
-                "FROM Orders " +
-                "ORDER BY orderTimestamp DESC " +
-                "LIMIT 5;";
-      }
-
-      List<List<String>> result = esql.executeQueryAndReturnResult(query);
-
-      if (result.isEmpty()) {
-         System.out.println("\nNo recent orders found.");
-      } else {
-         System.out.println("");
-         System.out.println("RECENT ORDERS (Last 5)");
-         System.out.println("---------------------");
-         
-         // Different display format based on user role
          if (esql.currentUserRole.equals("customer")) {
-            System.out.println("OrderID\tStoreID\tTimestamp\t\tTotal Price\tStatus");
-            System.out.println("----------------------------------------------------------");
-            for (List<String> order : result) {
-               System.out.printf("%s\t%s\t%s\t$%s\t%s\n", 
-                     order.get(0), // orderID
-                     order.get(1), // storeID
-                     order.get(2), // orderTimestamp
-                     order.get(3), // totalPrice
-                     order.get(4)  // orderStatus
-               );
-            }
+            // customer
+            query = String.format(
+                  "SELECT orderID, storeID, orderTimestamp, totalPrice, orderStatus " +
+                        "FROM FoodOrder " +
+                        "WHERE login = '%s' " +
+                        "ORDER BY orderTimestamp DESC;",
+                  esql.currentUserLogin);
          } else {
-            // More detailed view for managers and drivers
-            System.out.println("OrderID\tCustomer\tStoreID\tTimestamp\t\tTotal Price\tStatus");
-            System.out.println("-----------------------------------------------------------------------");
-            for (List<String> order : result) {
-               System.out.printf("%s\t%s\t%s\t%s\t$%s\t%s\n", 
-                     order.get(0), // orderID
-                     order.get(1), // customerLogin
-                     order.get(2), // storeID
-                     order.get(3), // orderTimestamp
-                     order.get(4), // totalPrice
-                     order.get(5)  // orderStatus
-               );
-            }
+            // manager + driver
+            query = "SELECT orderID, login, storeID, orderTimestamp, totalPrice, orderStatus " +
+                  "FROM FoodOrder " +
+                  "ORDER BY orderTimestamp DESC;";
          }
-         System.out.println("---------------------");
+
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+         if (result.isEmpty()) {
+            System.out.println("\nNo orders found.");
+         } else {
+            System.out.println("");
+            System.out.println("ORDER HISTORY");
+            System.out.println("-------------");
+
+            // customer
+            if (esql.currentUserRole.equals("customer")) {
+               System.out.println("ORDER HISTORY");
+               System.out.println("-------------");
+               System.out.println("OrderID\tStoreID\tTimestamp\t\tTotal Price\tStatus");
+               System.out.println("----------------------------------------------------------");
+               for (List<String> order : result) {
+                  System.out.printf("%-8s%-8s%-24s$%-14s%-20s\n",
+                        order.get(0), // orderID
+                        order.get(1), // storeID
+                        order.get(2), // orderTimestamp
+                        order.get(3), // totalPrice
+                        order.get(4) // orderStatus
+                  );
+               }
+            } else {
+               // managers + drivers
+               System.out.println("ORDER HISTORY");
+               System.out.println("-------------");
+               System.out.println("OrderID Customer\tStoreID\tTimestamp\t\tTotal Price\tStatus");
+               System.out
+                     .println("------------------------------------------------------------------------------------");
+               for (List<String> order : result) {
+                  System.out.printf("%-8s%-16s%-8s%-24s$%-14s%-20s\n",
+                        order.get(0), // orderID
+                        order.get(1), // login
+                        order.get(2), // storeID
+                        order.get(3), // orderTimestamp
+                        order.get(4), // totalPrice
+                        order.get(5) // orderStatus
+                  );
+               }
+            }
+            System.out.println("-------------");
+         }
+      } catch (Exception e) {
+         System.err.println("Error viewing order history: " + e.getMessage());
       }
-   } catch (Exception e) {
-      System.err.println("Error viewing recent orders: " + e.getMessage());
    }
-}
+
+   // view recent order
+   public static void viewRecentOrders(PizzaStore esql) {
+      try {
+         if (esql.currentUserLogin.isEmpty()) {
+            System.out.println("You must be logged in to view orders.");
+            return;
+         }
+
+         String query;
+
+         if (esql.currentUserRole.equals("customer")) {
+            // customers
+            query = String.format(
+                  "SELECT orderID, storeID, orderTimestamp, totalPrice, orderStatus " +
+                        "FROM FoodOrder " +
+                        "WHERE login = '%s' " +
+                        "ORDER BY orderTimestamp DESC " +
+                        "LIMIT 5;",
+                  esql.currentUserLogin);
+         } else {
+            // manager + driver
+            query = "SELECT orderID, login, storeID, orderTimestamp, totalPrice, orderStatus " +
+                  "FROM FoodOrder " +
+                  "ORDER BY orderTimestamp DESC " +
+                  "LIMIT 5;";
+         }
+
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+
+         if (result.isEmpty()) {
+            System.out.println("\nNo recent orders found.");
+         } else {
+            System.out.println("");
+            System.out.println("RECENT ORDERS (Last 5)");
+            System.out.println("---------------------");
+
+            // customer
+            if (esql.currentUserRole.equals("customer")) {
+               System.out.println("ORDER HISTORY");
+               System.out.println("-------------");
+               System.out.println("OrderID\tStoreID\tTimestamp\t\tTotal Price\tStatus");
+               System.out.println("----------------------------------------------------------");
+               for (List<String> order : result) {
+                  System.out.printf("%-8s%-8s%-24s$%-14s%-20s\n",
+                        order.get(0), // orderID
+                        order.get(1), // storeID
+                        order.get(2), // orderTimestamp
+                        order.get(3), // totalPrice
+                        order.get(4) // orderStatus
+                  );
+               }
+            } else {
+               // managers + drivers
+               System.out.println("ORDER HISTORY");
+               System.out.println("-------------");
+               System.out.println("OrderID Customer\tStoreID\tTimestamp\t\tTotal Price\tStatus");
+               System.out
+                     .println("------------------------------------------------------------------------------------");
+               for (List<String> order : result) {
+                  System.out.printf("%-8s%-16s%-8s%-24s$%-14s%-20s\n",
+                        order.get(0), // orderID
+                        order.get(1), // login
+                        order.get(2), // storeID
+                        order.get(3), // orderTimestamp
+                        order.get(4), // totalPrice
+                        order.get(5) // orderStatus
+                  );
+               }
+            }
+            System.out.println("---------------------");
+         }
+      } catch (Exception e) {
+         System.err.println("Error viewing recent orders: " + e.getMessage());
+      }
+   }
 
    public static void viewOrderInfo(PizzaStore esql) {
    }
