@@ -1182,26 +1182,37 @@ public class PizzaStore {
             } else if (choice >= 10000) {
                String orderID = String.valueOf(choice);
 
-               System.out.print("Enter the new status (complete/incomplete): ");
-               String newStatus = in.readLine().trim().toLowerCase();
-
-               if (!newStatus.equals("complete") && !newStatus.equals("incomplete")) {
-                  System.out.println("Invalid status. Please enter 'complete' or 'incomplete'.");
-                  continue;
-               }
-
-               String query = String.format(
-                     "UPDATE FoodOrder SET orderStatus = '%s' WHERE orderID = '%s';",
-                     newStatus, orderID);
+               String checkQuery = String.format(
+                     "SELECT COUNT(*) FROM FoodOrder WHERE orderID = '%s';",
+                     orderID);
 
                try {
-                  esql.executeUpdate(query);
-                  System.out.println("Order status updated successfully.");
-               } catch (Exception e) {
-                  System.out.println("Order ID not found or update failed.");
-               }
-               return;
+                  List<List<String>> result = esql.executeQueryAndReturnResult(checkQuery);
+                  int count = Integer.parseInt(result.get(0).get(0));
 
+                  if (count == 0) {
+                     System.out.println("Order ID not found.");
+                     continue;
+                  }
+
+                  System.out.print("Enter the new status (complete/incomplete): ");
+                  String newStatus = in.readLine().trim().toLowerCase();
+
+                  if (!newStatus.equals("complete") && !newStatus.equals("incomplete")) {
+                     System.out.println("Invalid status. Please enter 'complete' or 'incomplete'.");
+                     continue;
+                  }
+
+                  String updateQuery = String.format(
+                        "UPDATE FoodOrder SET orderStatus = '%s' WHERE orderID = '%s';",
+                        newStatus, orderID);
+
+                  esql.executeUpdate(updateQuery);
+                  System.out.println("Order status updated successfully.");
+                  return;
+               } catch (Exception e) {
+                  System.out.println("Error while processing order update: " + e.getMessage());
+               }
             } else {
                System.out.println("Invalid input. Please enter 0, 1, 2, or an Order ID 10000 or higher.");
             }
