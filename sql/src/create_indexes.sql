@@ -1,3 +1,13 @@
+DROP INDEX IF EXISTS idx_users_login;
+
+DROP INDEX IF EXISTS idx_foodorder_login_status;
+
+DROP INDEX IF EXISTS idx_foodorder_timestamp;
+
+DROP INDEX IF EXISTS idx_items_type;
+
+DROP INDEX IF EXISTS idx_itemsinorder_orderid;
+
 -- This appears in nearly every user-related function including LogIn(), viewProfile(), placeOrder(), and viewAllOrders().
 CREATE INDEX idx_users_login ON Users (login);
 
