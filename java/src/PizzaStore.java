@@ -775,7 +775,6 @@ public class PizzaStore {
          esql.executeUpdate(initOrderQuery);
          System.out.println("\nStarted a new order with ID: " + newOrderID);
 
-         double totalPrice = 0.0;
          boolean continueShopping = true;
 
          while (continueShopping) {
@@ -847,29 +846,36 @@ public class PizzaStore {
             esql.executeUpdate(addItemQuery);
 
             double subtotal = itemPrice * quantity;
-            totalPrice += subtotal;
 
-            System.out.printf("Added %d x %s (Subtotal: $%.2f)\n", quantity, itemName, subtotal);
+            String totalPriceQuery = String.format("SELECT totalPrice FROM FoodOrder WHERE orderID = %d", newOrderID);
+            List<List<String>> totalPriceResult = esql.executeQueryAndReturnResult(totalPriceQuery);
+            double totalPrice = Double.parseDouble(totalPriceResult.get(0).get(0));
+
+            System.out.printf("Added %d x %s (Subtotal: $%.2f; Total: $%.2f)\n", quantity, itemName, subtotal,
+                  totalPrice);
          }
 
-         if (totalPrice > 0) {
-            String updatePriceQuery = String.format(
-                  "UPDATE FoodOrder SET totalPrice = %.2f WHERE orderID = %d",
-                  totalPrice, newOrderID);
+         String totalPriceQuery = String.format("SELECT totalPrice FROM FoodOrder WHERE orderID = %d", newOrderID);
+         List<List<String>> totalPriceResult = esql.executeQueryAndReturnResult(totalPriceQuery);
 
-            esql.executeUpdate(updatePriceQuery);
+         if (!totalPriceResult.isEmpty()) {
+            double totalPrice = Double.parseDouble(totalPriceResult.get(0).get(0));
 
-            System.out.println("\nORDER SUMMARY");
-            System.out.println("-------------");
-            System.out.println("Order ID: " + newOrderID);
-            System.out.println("Store ID: " + selectedStoreID);
-            System.out.printf("Total Price: $%.2f\n", totalPrice);
-            System.out.println("Status: incomplete");
-            System.out.println("\nThank you for your order!");
+            if (totalPrice > 0) {
+               System.out.println("\nORDER SUMMARY");
+               System.out.println("-------------");
+               System.out.println("Order ID: " + newOrderID);
+               System.out.println("Store ID: " + selectedStoreID);
+               System.out.printf("Total Price: $%.2f\n", totalPrice);
+               System.out.println("Status: incomplete");
+               System.out.println("\nThank you for your order!");
+            } else {
+               String deleteOrderQuery = String.format("DELETE FROM FoodOrder WHERE orderID = %d", newOrderID);
+               esql.executeUpdate(deleteOrderQuery);
+               System.out.println("Order cancelled - no items were added.");
+            }
          } else {
-            String deleteOrderQuery = String.format("DELETE FROM FoodOrder WHERE orderID = %d", newOrderID);
-            esql.executeUpdate(deleteOrderQuery);
-            System.out.println("Order cancelled - no items were added.");
+            System.out.println("Error: Unable to retrieve total price for order.");
          }
 
       } catch (Exception e) {
