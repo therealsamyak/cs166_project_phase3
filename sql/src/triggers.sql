@@ -1,6 +1,11 @@
+DROP TRIGGER IF EXISTS update_order_price_after_item_change ON ItemsInOrder;
+
 -- automatically calculate total order price
 CREATE
-OR REPLACE FUNCTION update_order_total_price () RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+OR REPLACE LANGUAGE plpgsql;
+
+CREATE
+OR REPLACE FUNCTION update_order_total_price () RETURNS "trigger" AS $BODY$ BEGIN
 UPDATE FoodOrder
 SET
     totalPrice = (
@@ -18,7 +23,8 @@ WHERE
 RETURN NEW;
 
 END;
-$$;
+
+$BODY$ LANGUAGE plpgsql VOLATILE;
 
 -- trigger
 CREATE TRIGGER update_order_price_after_item_change AFTER INSERT
